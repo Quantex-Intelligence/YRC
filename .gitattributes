@@ -1,0 +1,8 @@
+# Binary assets - prevent delta compression and CRLF conversions
+*.jpg -delta -text
+*.jpeg -delta -text
+*.png -delta -text
+*.webp -delta -text
+*.gif -delta -text
+*.ico -delta -text
+*.pdf -delta -text

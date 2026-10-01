@@ -1,0 +1,20 @@
+node_modules/
+.next/
+.env
+.env.*
+!.env.example
+var/
+tmp/
+output/
+coverage/
+test-results/
+playwright-report/
+.DS_Store
+*.log
+__pycache__/
+# Supplied commercial assets are local source material, not public repository content.
+/*.pdf
+/PHOTO-*.jpg
+/.kiro/
+/data/extractions/
+*.tsbuildinfo
