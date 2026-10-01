@@ -10,7 +10,12 @@ const globalForPrisma = globalThis as unknown as {
 const connectionString =
   process.env.DATABASE_URL || "postgresql://satyaalugolu@localhost:5433/yrc_global";
 
-const pool = globalForPrisma.pool ?? new Pool({ connectionString });
+const pool =
+  globalForPrisma.pool ??
+  new Pool({
+    connectionString,
+    connectionTimeoutMillis: 3000,
+  });
 const adapter = new PrismaPg(pool);
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter });

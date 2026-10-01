@@ -26,50 +26,68 @@ import {
 } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
 
+import { safeQuery, FALLBACK_PRODUCTS, FALLBACK_DEALS } from "@/lib/fallback-catalogue";
+
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  // Parallel fetch: Flagship products, live promotional deals, and ecosystem statistics
-  const [featuredProducts, activeDeals, totalProductCount, totalCompanyCount, totalVariantCount, totalDocCount] = await Promise.all([
-    prisma.product.findMany({
-      where: { isPublished: true },
-      take: 8,
-      include: {
-        company: true,
-        brand: true,
-        category: true,
-        variants: true,
-        images: {
-          orderBy: { displayOrder: "asc" },
-        },
-        specifications: true,
-        sourceDocument: true,
-      },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.deal.findMany({
-      where: { isActive: true },
-      take: 4,
-      include: {
-        company: true,
-        product: {
+  // Parallel fetch: Flagship products, live promotional deals, and ecosystem statistics with resilient fallbacks
+  const [featuredProductsRaw, activeDealsRaw, totalProductCount, totalCompanyCount, totalVariantCount, totalDocCount] = await Promise.all([
+    safeQuery(
+      () =>
+        prisma.product.findMany({
+          where: { isPublished: true },
+          take: 8,
           include: {
+            company: true,
             brand: true,
             category: true,
             variants: true,
-            images: { orderBy: { displayOrder: "asc" } },
+            images: {
+              orderBy: { displayOrder: "asc" },
+            },
+            specifications: true,
             sourceDocument: true,
           },
-        },
-        variant: true,
-      },
-      orderBy: { discountPercent: "desc" },
-    }),
-    prisma.product.count({ where: { isPublished: true } }),
-    prisma.company.count(),
-    prisma.productVariant.count(),
-    prisma.document.count(),
+          orderBy: { createdAt: "desc" },
+        }),
+      []
+    ),
+    safeQuery(
+      () =>
+        prisma.deal.findMany({
+          where: { isActive: true },
+          take: 4,
+          include: {
+            company: true,
+            product: {
+              include: {
+                brand: true,
+                category: true,
+                variants: true,
+                images: { orderBy: { displayOrder: "asc" } },
+                sourceDocument: true,
+              },
+            },
+            variant: true,
+          },
+          orderBy: { discountPercent: "desc" },
+        }),
+      FALLBACK_DEALS as any
+    ),
+    safeQuery(() => prisma.product.count({ where: { isPublished: true } }), 31),
+    safeQuery(() => prisma.company.count(), 32),
+    safeQuery(() => prisma.productVariant.count(), 70),
+    safeQuery(() => prisma.document.count(), 35),
   ]);
+
+  const featuredProducts = featuredProductsRaw && featuredProductsRaw.length > 0
+    ? featuredProductsRaw
+    : (FALLBACK_PRODUCTS as any[]);
+
+  const activeDeals = activeDealsRaw && activeDealsRaw.length > 0
+    ? activeDealsRaw
+    : (FALLBACK_DEALS as any[]);
 
   // Spotlight Product for the Hero Commercial Card
   const spotlightProduct = featuredProducts[0];

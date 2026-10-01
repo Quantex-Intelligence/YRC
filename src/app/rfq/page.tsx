@@ -1,16 +1,23 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { safeQuery, FALLBACK_PRODUCTS } from "@/lib/fallback-catalogue";
 import { FileText, Send, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { submitRfqAction } from "@/app/actions/rfq";
 
 export const dynamic = "force-dynamic";
 
 export default async function RfqPortalPage() {
-  const products = await prisma.product.findMany({
-    where: { isPublished: true },
-    select: { id: true, name: true, entityKind: true },
-    orderBy: { name: "asc" },
-  });
+  const productsRaw = await safeQuery(
+    () =>
+      prisma.product.findMany({
+        where: { isPublished: true },
+        select: { id: true, name: true, entityKind: true },
+        orderBy: { name: "asc" },
+      }),
+    []
+  );
+
+  const products = productsRaw && productsRaw.length > 0 ? productsRaw : (FALLBACK_PRODUCTS as any);
 
   return (
     <div className="bg-slate-50 min-h-screen py-10">

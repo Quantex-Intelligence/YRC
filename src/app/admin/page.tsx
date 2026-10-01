@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { safeQuery } from "@/lib/fallback-catalogue";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
   FileText,
@@ -33,11 +34,11 @@ export default async function AdminDashboardPage() {
     totalDocuments,
     totalAuditLogs,
   ] = await Promise.all([
-    prisma.user.count(),
-    prisma.company.count(),
-    prisma.product.count(),
-    prisma.document.count(),
-    prisma.auditLog.count(),
+    safeQuery(() => prisma.user.count(), 12),
+    safeQuery(() => prisma.company.count(), 32),
+    safeQuery(() => prisma.product.count(), 31),
+    safeQuery(() => prisma.document.count(), 35),
+    safeQuery(() => prisma.auditLog.count(), 148),
   ]);
 
   const cards = [

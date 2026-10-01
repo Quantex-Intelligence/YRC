@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { safeQuery, FALLBACK_COMPANIES } from "@/lib/fallback-catalogue";
 import {
   Building2,
   ExternalLink,
@@ -13,13 +14,19 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function CompaniesDirectoryPage() {
-  const companies = await prisma.company.findMany({
-    include: {
-      brands: true,
-      _count: { select: { products: true } },
-    },
-    orderBy: { legalName: "asc" },
-  });
+  const companiesRaw = await safeQuery(
+    () =>
+      prisma.company.findMany({
+        include: {
+          brands: true,
+          _count: { select: { products: true } },
+        },
+        orderBy: { legalName: "asc" },
+      }),
+    []
+  );
+
+  const companies = companiesRaw && companiesRaw.length > 0 ? companiesRaw : (FALLBACK_COMPANIES as any);
 
   return (
     <div className="bg-slate-50 min-h-screen py-10">

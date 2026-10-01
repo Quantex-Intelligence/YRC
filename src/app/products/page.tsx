@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { safeQuery, FALLBACK_PRODUCTS, FALLBACK_CATEGORIES } from "@/lib/fallback-catalogue";
 import { Search, SlidersHorizontal, CheckCircle2, Package, Sparkles } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
 
@@ -70,32 +71,56 @@ export default async function ProductsCatalogPage({ searchParams }: SearchParams
     };
   }
 
-  // Execute database queries in parallel
-  const [products, categories, industries] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      include: {
-        company: true,
-        brand: true,
-        category: true,
-        variants: true,
-        images: {
+  // Execute database queries in parallel with error resilience
+  const [productsRaw, categoriesRaw, industriesRaw] = await Promise.all([
+    safeQuery(
+      () =>
+        prisma.product.findMany({
+          where,
+          include: {
+            company: true,
+            brand: true,
+            category: true,
+            variants: true,
+            images: {
+              orderBy: { displayOrder: "asc" },
+            },
+            specifications: true,
+            sourceDocument: true,
+          },
+          orderBy: { createdAt: "desc" },
+        }),
+      []
+    ),
+    safeQuery(
+      () =>
+        prisma.category.findMany({
+          where: { parentId: null },
+          include: { children: true },
           orderBy: { displayOrder: "asc" },
-        },
-        specifications: true,
-        sourceDocument: true,
-      },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.category.findMany({
-      where: { parentId: null },
-      include: { children: true },
-      orderBy: { displayOrder: "asc" },
-    }),
-    prisma.industry.findMany({
-      orderBy: { name: "asc" },
-    }),
+        }),
+      FALLBACK_CATEGORIES as any
+    ),
+    safeQuery(
+      () =>
+        prisma.industry.findMany({
+          orderBy: { name: "asc" },
+        }),
+      []
+    ),
   ]);
+
+  // Fallback filtering if database is unseeded or offline
+  const products = (productsRaw && productsRaw.length > 0)
+    ? productsRaw
+    : (FALLBACK_PRODUCTS as any[]).filter((p) => {
+        if (q && !p.name.toLowerCase().includes(q.toLowerCase()) && !p.shortDescription.toLowerCase().includes(q.toLowerCase())) return false;
+        if (category && p.category.slug !== category) return false;
+        return true;
+      });
+
+  const categories = (categoriesRaw && categoriesRaw.length > 0) ? categoriesRaw : (FALLBACK_CATEGORIES as any);
+  const industries = industriesRaw || [];
 
   return (
     <div className="bg-slate-50 min-h-screen py-8">

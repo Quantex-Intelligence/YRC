@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { safeQuery, FALLBACK_PRODUCTS } from "@/lib/fallback-catalogue";
 import { ProductVariantSelector } from "@/components/ProductVariantSelector";
 import { ProductMediaGallery } from "@/components/ProductMediaGallery";
 import { BrochurePreviewModal } from "@/components/BrochurePreviewModal";
@@ -41,27 +42,34 @@ interface ProductPageProps {
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { slug } = await params;
 
-  const product = await prisma.product.findUnique({
-    where: { slug },
-    include: {
-      company: {
-        include: { addresses: true },
-      },
-      brand: true,
-      category: {
-        include: { parent: true },
-      },
-      variants: { orderBy: { sku: "asc" } },
-      images: { orderBy: { displayOrder: "asc" } },
-      specifications: {
-        include: { specDefinition: true },
-        orderBy: { specDefinition: { displayOrder: "asc" } },
-      },
-      industries: { include: { industry: true } },
-      applications: { include: { application: true } },
-      sourceDocument: true,
-    },
-  });
+  const productRaw = await safeQuery(
+    () =>
+      prisma.product.findUnique({
+        where: { slug },
+        include: {
+          company: {
+            include: { addresses: true },
+          },
+          brand: true,
+          category: {
+            include: { parent: true },
+          },
+          variants: { orderBy: { sku: "asc" } },
+          images: { orderBy: { displayOrder: "asc" } },
+          specifications: {
+            include: { specDefinition: true },
+            orderBy: { specDefinition: { displayOrder: "asc" } },
+          },
+          industries: { include: { industry: true } },
+          applications: { include: { application: true } },
+          sourceDocument: true,
+        },
+      }),
+    null
+  );
+
+  const fallbackMatch = FALLBACK_PRODUCTS.find((p) => p.slug === slug);
+  const product = productRaw || (fallbackMatch as any);
 
   if (!product) {
     notFound();

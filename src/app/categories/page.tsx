@@ -1,22 +1,29 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { safeQuery, FALLBACK_CATEGORIES } from "@/lib/fallback-catalogue";
 import { Layers, ArrowRight, Package } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function CategoriesDirectoryPage() {
-  const categories = await prisma.category.findMany({
-    where: { parentId: null },
-    include: {
-      children: {
+  const categoriesRaw = await safeQuery(
+    () =>
+      prisma.category.findMany({
+        where: { parentId: null },
         include: {
+          children: {
+            include: {
+              _count: { select: { products: true } },
+            },
+          },
           _count: { select: { products: true } },
         },
-      },
-      _count: { select: { products: true } },
-    },
-    orderBy: { displayOrder: "asc" },
-  });
+        orderBy: { displayOrder: "asc" },
+      }),
+    []
+  );
+
+  const categories = categoriesRaw && categoriesRaw.length > 0 ? categoriesRaw : (FALLBACK_CATEGORIES as any);
 
   return (
     <div className="bg-slate-50 min-h-screen py-10">

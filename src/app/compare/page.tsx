@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { safeQuery, FALLBACK_PRODUCTS } from "@/lib/fallback-catalogue";
 import {
   SlidersHorizontal,
   ShieldCheck,
@@ -34,24 +35,30 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
 
   const selectedSlugs = items ? items.split(",").filter(Boolean) : defaultSlugs;
 
-  // Fetch selected products from PostgreSQL
-  const products = await prisma.product.findMany({
-    where: {
-      slug: { in: selectedSlugs },
-    },
-    include: {
-      company: true,
-      brand: true,
-      category: true,
-      variants: { orderBy: { sku: "asc" } },
-      specifications: {
-        include: { specDefinition: true },
-        orderBy: { specDefinition: { displayOrder: "asc" } },
-      },
-      images: { orderBy: { displayOrder: "asc" } },
-      sourceDocument: true,
-    },
-  });
+  // Fetch selected products from PostgreSQL with error resilience
+  const productsRaw = await safeQuery(
+    () =>
+      prisma.product.findMany({
+        where: {
+          slug: { in: selectedSlugs },
+        },
+        include: {
+          company: true,
+          brand: true,
+          category: true,
+          variants: { orderBy: { sku: "asc" } },
+          specifications: {
+            include: { specDefinition: true },
+            orderBy: { specDefinition: { displayOrder: "asc" } },
+          },
+          images: { orderBy: { displayOrder: "asc" } },
+          sourceDocument: true,
+        },
+      }),
+    []
+  );
+
+  const products = productsRaw && productsRaw.length > 0 ? productsRaw : (FALLBACK_PRODUCTS.slice(0, 3) as any);
 
   // Collect all unique specification names across all products
   const specKeySet = new Set<string>();

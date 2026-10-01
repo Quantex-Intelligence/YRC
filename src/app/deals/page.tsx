@@ -13,27 +13,34 @@ import {
   Building2,
 } from "lucide-react";
 import { BrochurePreviewModal } from "@/components/BrochurePreviewModal";
+import { safeQuery, FALLBACK_DEALS } from "@/lib/fallback-catalogue";
 
 export const dynamic = "force-dynamic";
 
 export default async function DealsPage() {
-  const deals = await prisma.deal.findMany({
-    where: { isActive: true },
-    include: {
-      company: true,
-      product: {
+  const dealsRaw = await safeQuery(
+    () =>
+      prisma.deal.findMany({
+        where: { isActive: true },
         include: {
-          brand: true,
-          category: true,
-          variants: true,
-          images: { orderBy: { displayOrder: "asc" } },
-          sourceDocument: true,
+          company: true,
+          product: {
+            include: {
+              brand: true,
+              category: true,
+              variants: true,
+              images: { orderBy: { displayOrder: "asc" } },
+              sourceDocument: true,
+            },
+          },
+          variant: true,
         },
-      },
-      variant: true,
-    },
-    orderBy: { discountPercent: "desc" },
-  });
+        orderBy: { discountPercent: "desc" },
+      }),
+    FALLBACK_DEALS as any
+  );
+
+  const deals = dealsRaw && dealsRaw.length > 0 ? dealsRaw : (FALLBACK_DEALS as any);
 
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
