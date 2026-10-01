@@ -1,1 +1,0 @@
-# YRC Global - Industrial Procurement & Engineering Ecosystem

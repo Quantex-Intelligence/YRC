@@ -1,0 +1,116 @@
+export const Permissions = {
+  CATALOGUE_READ_PUBLISHED: "catalogue.read_published",
+  CATALOGUE_EDIT_OWN_DRAFT: "catalogue.edit_own_draft",
+  CATALOGUE_REVIEW: "catalogue.review",
+  CATALOGUE_PUBLISH: "catalogue.publish",
+  DOCUMENT_UPLOAD: "document.upload",
+  DOCUMENT_READ_PRIVATE: "document.read_private",
+  RFQ_CREATE: "rfq.create",
+  RFQ_READ_ASSIGNED: "rfq.read_assigned",
+  QUOTE_RESPOND_OWN: "quote.respond_own_company",
+  QUOTE_ACCEPT_OWN: "quote.accept_own_rfq",
+  ORDERS_CREATE: "orders.create",
+  ORDERS_READ_OWN: "orders.read_own",
+  ORDERS_MANAGE: "orders.manage",
+  CONTENT_REVIEW: "content.review",
+  ADS_PUBLISH: "ads.publish",
+  USERS_MANAGE: "users.manage",
+  ROLES_MANAGE: "roles.manage",
+} as const;
+
+export type PermissionCode = (typeof Permissions)[keyof typeof Permissions];
+
+export const RoleCodes = {
+  SUPER_ADMIN: "SUPER_ADMIN",
+  ADMIN: "ADMIN",
+  CATALOGUE_ADMIN: "CATALOGUE_ADMIN",
+  CONTENT_ADMIN: "CONTENT_ADMIN",
+  SALES_ADMIN: "SALES_ADMIN",
+  SUPPORT_ADMIN: "SUPPORT_ADMIN",
+  BUYER: "BUYER",
+  BUSINESS_BUYER: "BUSINESS_BUYER",
+  MANUFACTURER: "MANUFACTURER",
+  SUPPLIER: "SUPPLIER",
+  CHANNEL_PARTNER: "CHANNEL_PARTNER",
+  SERVICE_PROVIDER: "SERVICE_PROVIDER",
+  FRANCHISE_PARTNER: "FRANCHISE_PARTNER",
+  ADVERTISER: "ADVERTISER",
+} as const;
+
+export type RoleCode = (typeof RoleCodes)[keyof typeof RoleCodes];
+
+export const DefaultRolePermissions: Record<RoleCode, PermissionCode[]> = {
+  SUPER_ADMIN: Object.values(Permissions),
+  ADMIN: [
+    Permissions.CATALOGUE_READ_PUBLISHED,
+    Permissions.CATALOGUE_REVIEW,
+    Permissions.CATALOGUE_PUBLISH,
+    Permissions.DOCUMENT_UPLOAD,
+    Permissions.DOCUMENT_READ_PRIVATE,
+    Permissions.ORDERS_MANAGE,
+    Permissions.CONTENT_REVIEW,
+    Permissions.ADS_PUBLISH,
+    Permissions.USERS_MANAGE,
+  ],
+  CATALOGUE_ADMIN: [
+    Permissions.CATALOGUE_READ_PUBLISHED,
+    Permissions.CATALOGUE_EDIT_OWN_DRAFT,
+    Permissions.CATALOGUE_REVIEW,
+    Permissions.CATALOGUE_PUBLISH,
+    Permissions.DOCUMENT_UPLOAD,
+    Permissions.DOCUMENT_READ_PRIVATE,
+  ],
+  CONTENT_ADMIN: [
+    Permissions.CATALOGUE_READ_PUBLISHED,
+    Permissions.CONTENT_REVIEW,
+    Permissions.ADS_PUBLISH,
+  ],
+  SALES_ADMIN: [
+    Permissions.CATALOGUE_READ_PUBLISHED,
+    Permissions.RFQ_READ_ASSIGNED,
+    Permissions.ORDERS_MANAGE,
+  ],
+  SUPPORT_ADMIN: [
+    Permissions.CATALOGUE_READ_PUBLISHED,
+    Permissions.ORDERS_READ_OWN,
+  ],
+  BUYER: [
+    Permissions.CATALOGUE_READ_PUBLISHED,
+    Permissions.RFQ_CREATE,
+    Permissions.QUOTE_ACCEPT_OWN,
+    Permissions.ORDERS_CREATE,
+    Permissions.ORDERS_READ_OWN,
+  ],
+  BUSINESS_BUYER: [
+    Permissions.CATALOGUE_READ_PUBLISHED,
+    Permissions.RFQ_CREATE,
+    Permissions.QUOTE_ACCEPT_OWN,
+    Permissions.ORDERS_CREATE,
+    Permissions.ORDERS_READ_OWN,
+  ],
+  MANUFACTURER: [
+    Permissions.CATALOGUE_READ_PUBLISHED,
+    Permissions.CATALOGUE_EDIT_OWN_DRAFT,
+    Permissions.RFQ_READ_ASSIGNED,
+    Permissions.QUOTE_RESPOND_OWN,
+    Permissions.ORDERS_READ_OWN,
+    Permissions.DOCUMENT_UPLOAD,
+  ],
+  SUPPLIER: [
+    Permissions.CATALOGUE_READ_PUBLISHED,
+    Permissions.CATALOGUE_EDIT_OWN_DRAFT,
+    Permissions.RFQ_READ_ASSIGNED,
+    Permissions.QUOTE_RESPOND_OWN,
+    Permissions.ORDERS_READ_OWN,
+    Permissions.DOCUMENT_UPLOAD,
+  ],
+  CHANNEL_PARTNER: [Permissions.CATALOGUE_READ_PUBLISHED],
+  SERVICE_PROVIDER: [
+    Permissions.CATALOGUE_READ_PUBLISHED,
+    Permissions.CATALOGUE_EDIT_OWN_DRAFT,
+    Permissions.RFQ_READ_ASSIGNED,
+    Permissions.QUOTE_RESPOND_OWN,
+  ],
+  FRANCHISE_PARTNER: [Permissions.CATALOGUE_READ_PUBLISHED],
+  ADVERTISER: [Permissions.CATALOGUE_READ_PUBLISHED],
+};
